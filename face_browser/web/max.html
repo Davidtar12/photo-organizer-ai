@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Max — Dog Photos</title>
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color: #202124; background: #fff; }
+
+    .header { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #dadce0; background: #fff; }
+    .title { font-size: 20px; font-weight: 600; margin-right: auto; }
+    .controls { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #5f6368; }
+    .controls input[type="number"] { width: 70px; padding: 6px 8px; border: 1px solid #dadce0; border-radius: 6px; }
+    .controls button { padding: 6px 10px; border: 1px solid #dadce0; border-radius: 6px; background: #fff; cursor: pointer; }
+    .controls button:hover { background: #f1f3f4; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 2px; padding: 12px; }
+    .card { position: relative; aspect-ratio: 1; overflow: hidden; background: #f1f3f4; }
+    .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .badge { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,.55); color: #fff; padding: 2px 6px; border-radius: 12px; font-size: 12px; }
+
+    .footer { text-align: center; padding: 12px; }
+    .load-more { padding: 10px 14px; border: 1px solid #dadce0; border-radius: 8px; background: #fff; cursor: pointer; }
+    .load-more:hover { background: #f1f3f4; }
+
+    .empty { padding: 48px 16px; text-align: center; color: #5f6368; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">🐶 Max — Dog Photos</div>
+    <div class="controls">
+      <span id="totalMatches"></span>
+      <label>Min prob</label>
+      <input id="minProb" type="number" min="0" max="1" step="0.01" value="0.10">
+      <button id="applyBtn">Apply</button>
+    </div>
+  </div>
+
+  <div id="grid" class="grid"></div>
+  <div id="empty" class="empty" style="display:none;">No Max photos found at this threshold.</div>
+  <div class="footer"><button id="loadMore" class="load-more" style="display:none;">Load more</button></div>
+
+  <script>
+    const API = 'http://127.0.0.1:5052/api/pets';
+    let state = { offset: 0, limit: 200, minProb: 0.10, loading: false, done: false };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('minProb').value = state.minProb.toFixed(2);
+      document.getElementById('applyBtn').addEventListener('click', () => {
+        const v = parseFloat(document.getElementById('minProb').value || '0.1');
+        state.minProb = isFinite(v) ? Math.max(0, Math.min(1, v)) : 0.1;
+        resetAndLoad();
+      });
+      document.getElementById('loadMore').addEventListener('click', () => load());
+      load();
+    });
+
+    async function load() {
+      if (state.loading || state.done) return;
+      state.loading = true;
+      toggleLoadButton(false);
+      try {
+        const url = `${API}/max?min_prob=${state.minProb}&limit=${state.limit}&offset=${state.offset}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const items = (data && data.pets) || [];
+        
+        document.getElementById('totalMatches').textContent = `Found ${data.total_matches || 0} total matches`;
+
+        append(items);
+        state.offset += items.length;
+        state.done = items.length < state.limit || (state.offset >= data.total_matches);
+        toggleLoadButton(!state.done);
+        toggleEmpty();
+      } catch (e) {
+        console.error('Load failed', e);
+        toggleEmpty(true);
+      } finally {
+        state.loading = false;
+      }
+    }
+
+    function resetAndLoad() {
+      state.offset = 0; state.done = false;
+      document.getElementById('grid').innerHTML = '';
+      document.getElementById('empty').style.display = 'none';
+      load();
+    }
+
+    function append(items) {
+      const grid = document.getElementById('grid');
+      const html = items.map(p => {
+        const mid = p?.media?.id;
+        const thumb = `${API}/pet/${p.id}/thumbnail`;
+        const full = mid ? `${API}/media/${mid}/image` : thumb;
+        const prob = p?.probability;
+        return `<a class="card" href="${full}" target="_blank" title="${p?.media?.path || ''}">
+                  <span class="badge">Prob: ${prob ? prob.toFixed(2) : 'N/A'}</span>
+                  <img loading="lazy" src="${thumb}" alt="Max">
+                </a>`;
+      }).join('');
+      grid.insertAdjacentHTML('beforeend', html);
+    }
+
+    function toggleLoadButton(show) {
+      document.getElementById('loadMore').style.display = show ? 'inline-block' : 'none';
+    }
+
+    function toggleEmpty(force=false) {
+      const gridEmpty = document.getElementById('grid').children.length === 0;
+      document.getElementById('empty').style.display = (force || gridEmpty) ? 'block' : 'none';
+    }
+  </script>
+</body>
+</html>

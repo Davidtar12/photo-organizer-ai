@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Photos</title>
+    <style>
+        :root { color-scheme: light; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color: #202124; background: #fff; }
+
+        .header { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; border-bottom: 1px solid #dadce0; background: #fff; }
+        .header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+        .search-box input { width: 280px; max-width: 40vw; padding: 10px 12px; border: 1px solid #dadce0; border-radius: 20px; font-size: 14px; outline: none; }
+        .search-box input:focus { border-color: #1a73e8; box-shadow: 0 1px 6px rgba(32,33,36,.28); }
+
+        .container { max-width: 1600px; margin: 0 auto; }
+        .section-header { padding: 16px; display: flex; align-items: center; justify-content: space-between; }
+        .section-title { font-size: 18px; font-weight: 600; }
+        .section-subtitle { font-size: 12px; color: #5f6368; margin-top: 2px; }
+
+        .clusters-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; padding: 0 16px 24px; }
+        .cluster-card { cursor: pointer; border-radius: 8px; padding: 8px 8px 12px; transition: transform .15s ease, box-shadow .15s ease; }
+        .cluster-card:hover { transform: translateY(-2px); box-shadow: 0 1px 3px rgba(60,64,67,.3), 0 4px 8px rgba(60,64,67,.15); }
+        .cluster-thumbnail { width: 132px; height: 132px; border-radius: 50%; margin: 0 auto 8px; background: #f1f3f4; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .cluster-thumbnail img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .cluster-name { font-size: 14px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cluster-count { font-size: 12px; color: #5f6368; text-align: center; }
+        .loading { text-align: center; padding: 48px; color: #5f6368; }
+
+        .person-view { display: none; position: fixed; inset: 0; background: #fff; z-index: 200; overflow-y: auto; }
+        .person-header { position: sticky; top: 0; z-index: 100; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 12px; border-bottom: 1px solid #dadce0; background: #fff; }
+        .selection-header { display: none; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid #1a73e8; background: #e8f0fe; }
+        .back-button { background: none; border: none; font-size: 20px; cursor: pointer; color: #5f6368; padding: 10px; border-radius: 50%; width: 40px; height: 40px; display: grid; place-items: center; }
+        .back-button:hover { background: #f1f3f4; }
+        .person-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: #f1f3f4; }
+        .person-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .person-info { flex: 1; }
+        .person-name-input { font-size: 18px; border: none; outline: none; background: transparent; padding: 6px 8px; border-radius: 4px; }
+        .person-name-input:focus { background: #f1f3f4; }
+        .action-btn { background: none; border: none; padding: 10px; cursor: pointer; border-radius: 50%; color: #5f6368; font-size: 18px; }
+        .action-btn:hover { background: #f1f3f4; }
+
+        .date-group { margin: 16px 0; }
+        .date-header { padding: 8px 16px; font-size: 13px; color: #5f6368; font-weight: 500; }
+        .photos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 2px; padding: 0 8px; }
+        .photo-card { position: relative; aspect-ratio: 1; overflow: hidden; background: #f1f3f4; cursor: pointer; }
+        .photo-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .select-overlay { position: absolute; inset: 0; background: rgba(26,115,232,.1); display: none; }
+        .photo-card.selected .select-overlay { display: block; }
+        .select-checkbox { position: absolute; top: 8px; left: 8px; width: 22px; height: 22px; border: 2px solid #fff; border-radius: 50%; background: rgba(0,0,0,.35); display: none; align-items: center; justify-content: center; color: #fff; font-size: 14px; font-weight: bold; }
+        .photo-card:hover .select-checkbox, .photo-card.selected .select-checkbox { display: flex; }
+        .photo-card.selected .select-checkbox { background: #1a73e8; border-color: #1a73e8; }
+
+        .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.95); z-index: 300; align-items: center; justify-content: center; }
+        .lightbox img { max-width: 90%; max-height: 90%; object-fit: contain; }
+        .lightbox .close-btn { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,.1); color: #fff; border: none; width: 44px; height: 44px; border-radius: 50%; font-size: 24px; cursor: pointer; }
+        .lightbox .close-btn:hover { background: rgba(255,255,255,.2); }
+        .lightbox .path-info { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.7); color: #fff; padding: 8px 16px; border-radius: 4px; font-size: 12px; max-width: 80%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📸 Photos</h1>
+        <div class="search-box">
+            <input type="text" placeholder="Search your photos" id="searchBox">
+        </div>
+    </div>
+    
+    <div class="container">
+        <div id="clustersView">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">People & Pets</div>
+                    <div class="section-subtitle" id="peopleCount">Loading...</div>
+                </div>
+            </div>
+            <div class="loading">
+                <p>Loading people...</p>
+            </div>
+            <div class="clusters-grid" id="clustersGrid"></div>
+        </div>
+        
+        <div class="person-view" id="personView">
+            <div class="selection-header" id="selectionHeader">
+                <button class="back-button" onclick="clearSelection()">×</button>
+                <span id="selectionCount">0 selected</span>
+                <div style="flex: 1"></div>
+                <button class="action-btn delete-selected" onclick="deleteSelected()" title="Delete">🗑️</button>
+            </div>
+            
+            <div class="person-header">
+                <button class="back-button" onclick="closePerson()">←</button>
+                <div class="person-avatar" id="personAvatar"></div>
+                <div class="person-info">
+                    <input type="text" class="person-name-input" id="personName" placeholder="Add name..." onchange="updatePersonName()">
+                </div>
+                <div class="action-buttons">
+                    <button class="action-btn" title="Share">🔗</button>
+                </div>
+            </div>
+            
+            <div id="photosContainer"></div>
+        </div>
+    </div>
+    
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <button class="close-btn" onclick="closeLightbox(); event.stopPropagation();">×</button>
+        <img id="lightboxImg" src="" onclick="event.stopPropagation();">
+        <div class="path-info" id="lightboxPath"></div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://127.0.0.1:5052/api';
+        let currentPerson = null;
+        let selectedPhotos = new Set();
+
+        // Cluster cover helpers: try thumbnail first, then fallback to first media
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadClusters();
+        });
+        
+        async function loadClusters() {
+            try {
+                const response = await fetch(`${API_BASE}/persons/`);
+                const data = await response.json();
+                
+                document.querySelector('.loading').style.display = 'none';
+                document.getElementById('peopleCount').textContent = `${data.length} people`;
+                
+                const grid = document.getElementById('clustersGrid');
+                grid.innerHTML = data.map(person => `
+                    <div class="cluster-card" onclick="openPerson(${person.id})">
+                        <div class="cluster-thumbnail">
+                            <img id="cluster-img-${person.id}" loading="lazy"
+                                 src="${API_BASE}/persons/${person.id}/cover-image"
+                                 alt="${person.display_name || 'Unknown'}"
+                                 onerror="this.style.display='none'; this.parentElement.style.background='#e0e0e0';">
+                        </div>
+                        <div class="cluster-name">${person.display_name || 'Unknown'}</div>
+                        <div class="cluster-count">${person.face_count} photo${person.face_count !== 1 ? 's' : ''}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading clusters:', error);
+                document.querySelector('.loading').innerHTML = '<p style="color: #d93025;">Failed to load people</p>';
+            }
+        }
+        
+        async function openPerson(personId) {
+            try {
+                const response = await fetch(`${API_BASE}/persons/${personId}`);
+                const data = await response.json();
+                currentPerson = data.cluster; // use nested cluster object
+                const faces = Array.isArray(data.faces) ? data.faces : [];
+                selectedPhotos.clear();
+                updateSelectionHeader();
+
+                document.getElementById('clustersView').style.display = 'none';
+                document.getElementById('personView').style.display = 'block';
+                document.getElementById('personName').value = currentPerson?.display_name || '';
+
+                // Set person avatar (avoid 404 if no primary face)
+                const avatarEl = document.getElementById('personAvatar');
+                if (currentPerson?.primary_face_id) {
+                    avatarEl.innerHTML = `
+                        <img src="${API_BASE}/persons/face/${currentPerson.primary_face_id}/thumbnail" 
+                             alt="${currentPerson?.display_name || 'Unknown'}"
+                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23ddd%22/%3E%3Ctext x=%2250%22 y=%2260%22 text-anchor=%22middle%22 font-size=%2240%22 fill=%22%23999%22%3E?%3C/text%3E%3C/svg%3E'">
+                    `;
+                } else {
+                    avatarEl.innerHTML = `
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23ddd%22/%3E%3Ctext x=%2250%22 y=%2260%22 text-anchor=%22middle%22 font-size=%2240%22 fill=%22%23999%22%3E?%3C/text%3E%3C/svg%3E" 
+                             alt="${currentPerson?.display_name || 'Unknown'}">
+                    `;
+                }
+
+                // Group photos by date
+                const photosByDate = groupPhotosByDate(faces);
+
+                const container = document.getElementById('photosContainer');
+                container.innerHTML = Object.entries(photosByDate).map(([date, photos]) => `
+                    <div class="date-group">
+                        <div class="date-header">${date}</div>
+                        <div class="photos-grid">
+                            ${photos.map(face => {
+                                const mid = face?.media?.id;
+                                const path = face?.media?.path || '';
+                                if (!mid) return '';
+                                return `
+                                    <div class="photo-card ${selectedPhotos.has(mid) ? 'selected' : ''}" 
+                                         data-media-id="${mid}"
+                                         data-path="${path}"
+                                         onclick="togglePhotoSelection(${mid}, event)"
+                                         title="${path}">
+                                        <div class="select-overlay"><div class="select-checkbox">✓</div></div>
+                                        <img loading="lazy" src="${API_BASE}/persons/media/${mid}/image" 
+                                             alt="Photo"
+                                             onclick="openLightbox('${API_BASE}/persons/media/${mid}/image', event)">
+                                    </div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error loading person:', error);
+                alert('Failed to load person details');
+            }
+        }
+        
+        function groupPhotosByDate(faces) {
+            const groups = {};
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            faces.forEach(face => {
+                const ts = face?.media?.updated_at || face?.media?.created_at || face?.updated_at || face?.created_at;
+                const photoDate = ts ? new Date(ts) : null;
+                let dateKey;
+                if (!photoDate || isNaN(photoDate.getTime())) {
+                    dateKey = 'Unknown date';
+                } else if (isSameDay(photoDate, today)) {
+                    dateKey = 'Today';
+                } else if (isSameDay(photoDate, yesterday)) {
+                    dateKey = 'Yesterday';
+                } else {
+                    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    dateKey = `${days[photoDate.getDay()]}, ${months[photoDate.getMonth()]} ${photoDate.getDate()}`;
+                }
+                
+                if (!groups[dateKey]) {
+                    groups[dateKey] = [];
+                }
+                groups[dateKey].push(face);
+            });
+            
+            return groups;
+        }
+        
+        function isSameDay(date1, date2) {
+            return date1.getFullYear() === date2.getFullYear() &&
+                   date1.getMonth() === date2.getMonth() &&
+                   date1.getDate() === date2.getDate();
+        }
+        
+        function togglePhotoSelection(mediaId, event) {
+            // Allow selection anywhere on card except when clicking the image itself
+            if (event && event.target.tagName === 'IMG' && !event.target.classList.contains('select-checkbox')) {
+                return; // Let image click open lightbox
+            }
+            
+            if (event) event.stopPropagation();
+            
+            const card = document.querySelector(`[data-media-id="${mediaId}"]`);
+            if (!card) return;
+            
+            if (selectedPhotos.has(mediaId)) {
+                selectedPhotos.delete(mediaId);
+                card.classList.remove('selected');
+            } else {
+                selectedPhotos.add(mediaId);
+                card.classList.add('selected');
+            }
+            updateSelectionHeader();
+        }
+        
+        function updateSelectionHeader() {
+            const header = document.getElementById('selectionHeader');
+            const personHeader = document.querySelector('.person-header');
+            if (selectedPhotos.size > 0) {
+                header.style.display = 'flex';
+                personHeader.style.display = 'none';
+                document.getElementById('selectionCount').textContent = `${selectedPhotos.size} selected`;
+            } else {
+                header.style.display = 'none';
+                personHeader.style.display = 'flex';
+            }
+        }
+        
+        function clearSelection() {
+            selectedPhotos.clear();
+            document.querySelectorAll('.photo-card.selected').forEach(card => {
+                card.classList.remove('selected');
+            });
+            updateSelectionHeader();
+        }
+        
+        async function deleteSelected() {
+            if (selectedPhotos.size === 0) return;
+            
+            if (!confirm(`Delete ${selectedPhotos.size} photo${selectedPhotos.size !== 1 ? 's' : ''}? They will be moved to trash.`)) {
+                return;
+            }
+            
+            const deletePromises = Array.from(selectedPhotos).map(mediaId => 
+                fetch(`${API_BASE}/persons/media/${mediaId}`, { method: 'DELETE' })
+            );
+            
+            try {
+                await Promise.all(deletePromises);
+                // Remove deleted photos from view
+                selectedPhotos.forEach(mediaId => {
+                    const card = document.querySelector(`[data-media-id="${mediaId}"]`);
+                    if (card) card.remove();
+                });
+                
+                // Clean up empty date groups
+                document.querySelectorAll('.date-group').forEach(group => {
+                    if (group.querySelector('.photos-grid').children.length === 0) {
+                        group.remove();
+                    }
+                });
+                
+                selectedPhotos.clear();
+                updateSelectionHeader();
+                
+                // If no photos left, close and refresh people
+                const remaining = document.querySelectorAll('#photosContainer .photo-card').length;
+                if (remaining === 0) {
+                    closePerson();
+                    loadClusters();
+                }
+            } catch (error) {
+                console.error('Error deleting photos:', error);
+                alert('Failed to delete some photos');
+            }
+        }
+        
+        function closePerson() {
+            selectedPhotos.clear();
+            document.getElementById('personView').style.display = 'none';
+            document.getElementById('clustersView').style.display = 'block';
+            currentPerson = null;
+            loadClusters(); // Refresh counts
+        }
+        
+        async function updatePersonName() {
+            if (!currentPerson) return;
+            
+            const newName = document.getElementById('personName').value;
+            try {
+                await fetch(`${API_BASE}/persons/${currentPerson.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ display_name: newName })
+                });
+                currentPerson.display_name = newName;
+            } catch (error) {
+                console.error('Error updating name:', error);
+                alert('Failed to update name');
+            }
+        }
+        
+        function openLightbox(imageSrc, event) {
+            if (event) event.stopPropagation();
+            
+            // Find the photo card to get the path
+            const clickedCard = event?.target?.closest('.photo-card');
+            const path = clickedCard?.dataset?.path || '';
+            
+            document.getElementById('lightboxImg').src = imageSrc;
+            document.getElementById('lightboxPath').textContent = path;
+            document.getElementById('lightbox').style.display = 'flex';
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (document.getElementById('lightbox').style.display === 'flex') {
+                    closeLightbox();
+                } else if (selectedPhotos.size > 0) {
+                    clearSelection();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

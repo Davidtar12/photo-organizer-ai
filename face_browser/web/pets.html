@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pets</title>
+    <style>
+        :root { color-scheme: light; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color: #202124; background: #fff; }
+
+        .header { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; border-bottom: 1px solid #dadce0; background: #fff; }
+        .header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+        .search-box input { width: 280px; max-width: 40vw; padding: 10px 12px; border: 1px solid #dadce0; border-radius: 20px; font-size: 14px; outline: none; }
+        .search-box input:focus { border-color: #1a73e8; box-shadow: 0 1px 6px rgba(32,33,36,.28); }
+
+        .container { max-width: 1600px; margin: 0 auto; }
+        .section-header { padding: 16px; display: flex; align-items: center; justify-content: space-between; }
+        .section-title { font-size: 18px; font-weight: 600; }
+        .section-subtitle { font-size: 12px; color: #5f6368; margin-top: 2px; }
+
+        .clusters-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; padding: 0 16px 24px; }
+        .cluster-card { cursor: pointer; border-radius: 8px; padding: 8px 8px 12px; transition: transform .15s ease, box-shadow .15s ease; }
+        .cluster-card:hover { transform: translateY(-2px); box-shadow: 0 1px 3px rgba(60,64,67,.3), 0 4px 8px rgba(60,64,67,.15); }
+        .cluster-thumbnail { width: 132px; height: 132px; border-radius: 50%; margin: 0 auto 8px; background: #f1f3f4; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .cluster-thumbnail img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .cluster-name { font-size: 14px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cluster-count { font-size: 12px; color: #5f6368; text-align: center; }
+        .loading { text-align: center; padding: 48px; color: #5f6368; }
+
+        .pet-view { display: none; position: fixed; inset: 0; background: #fff; z-index: 200; overflow-y: auto; }
+        .pet-header { position: sticky; top: 0; z-index: 100; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 12px; border-bottom: 1px solid #dadce0; background: #fff; }
+        .selection-header { display: none; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid #1a73e8; background: #e8f0fe; }
+        .back-button { background: none; border: none; font-size: 20px; cursor: pointer; color: #5f6368; padding: 10px; border-radius: 50%; width: 40px; height: 40px; display: grid; place-items: center; }
+        .back-button:hover { background: #f1f3f4; }
+        .pet-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: #f1f3f4; }
+        .pet-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .pet-info { flex: 1; }
+        .pet-name-input { font-size: 18px; border: none; outline: none; background: transparent; padding: 6px 8px; border-radius: 4px; }
+        .pet-name-input:focus { background: #f1f3f4; }
+        .action-btn { background: none; border: none; padding: 10px; cursor: pointer; border-radius: 50%; color: #5f6368; font-size: 18px; }
+        .action-btn:hover { background: #f1f3f4; }
+
+        .date-group { margin: 16px 0; }
+        .date-header { padding: 8px 16px; font-size: 13px; color: #5f6368; font-weight: 500; }
+        .photos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 2px; padding: 0 8px; }
+        .photo-card { position: relative; aspect-ratio: 1; overflow: hidden; background: #f1f3f4; cursor: pointer; }
+        .photo-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .select-overlay { position: absolute; inset: 0; background: rgba(26,115,232,.1); display: none; }
+        .photo-card.selected .select-overlay { display: block; }
+        .select-checkbox { position: absolute; top: 8px; left: 8px; width: 22px; height: 22px; border: 2px solid #fff; border-radius: 50%; background: rgba(0,0,0,.35); display: none; align-items: center; justify-content: center; color: #fff; font-size: 14px; font-weight: bold; }
+        .photo-card:hover .select-checkbox, .photo-card.selected .select-checkbox { display: flex; }
+        .photo-card.selected .select-checkbox { background: #1a73e8; border-color: #1a73e8; }
+
+        .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.95); z-index: 300; align-items: center; justify-content: center; }
+        .lightbox img { max-width: 90%; max-height: 90%; object-fit: contain; }
+        .lightbox .close-btn { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,.1); color: #fff; border: none; width: 44px; height: 44px; border-radius: 50%; font-size: 24px; cursor: pointer; }
+        .lightbox .close-btn:hover { background: rgba(255,255,255,.2); }
+        .lightbox .path-info { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.7); color: #fff; padding: 8px 16px; border-radius: 4px; font-size: 12px; max-width: 80%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🐕 Pets</h1>
+        <div class="search-box">
+            <input type="text" placeholder="Search your pets" id="searchBox">
+        </div>
+    </div>
+    
+    <div class="container">
+        <div id="clustersView">
+            <div class="section-header">
+                <div>
+                    <div class="section-title">Pet Clusters</div>
+                    <div class="section-subtitle" id="petsCount">Loading...</div>
+                </div>
+            </div>
+            <div class="loading">
+                <p>Loading clusters...</p>
+            </div>
+            <div class="clusters-grid" id="clustersGrid"></div>
+        </div>
+        
+        <div class="pet-view" id="petView">
+            <div class="pet-header">
+                <button class="back-button" onclick="closePetView()">←</button>
+                <div class="pet-avatar">
+                    <img id="petCoverImg" src="" alt="">
+                </div>
+                <div class="pet-info">
+                    <input type="text" class="pet-name-input" id="petNameInput" value="" readonly>
+                </div>
+            </div>
+            <div id="petPhotosContainer"></div>
+        </div>
+    </div>
+    
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <button class="close-btn" onclick="closeLightbox(); event.stopPropagation();">×</button>
+        <img id="lightboxImg" src="" onclick="event.stopPropagation();">
+        <div class="path-info" id="lightboxPath"></div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://127.0.0.1:5052/api';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadClusters();
+        });
+        
+        async function loadClusters() {
+            try {
+                const response = await fetch(`${API_BASE}/pets/`);
+                const data = await response.json();
+                
+                document.querySelector('.loading').style.display = 'none';
+                document.getElementById('petsCount').textContent = `${data.clusters.length} clusters found`;
+                
+                const grid = document.getElementById('clustersGrid');
+                grid.innerHTML = data.clusters.map(cluster => {
+                    const thumbUrl = `${API_BASE}/pets/${cluster.id}/cover-image`;
+                    return `
+                    <div class="cluster-card" onclick="openCluster(${cluster.id}, '${cluster.species}')">
+                        <div class="cluster-thumbnail">
+                            <img loading="lazy"
+                                 src="${thumbUrl}"
+                                 alt="Pet cluster"
+                                 onerror="this.style.display='none'; this.parentElement.style.background='#e0e0e0';">
+                        </div>
+                        <div class="cluster-name">${cluster.species} ${cluster.id}</div>
+                        <div class="cluster-count">${cluster.count} photos</div>
+                    </div>
+                `}).join('');
+
+            } catch (error) {
+                console.error('Error loading clusters:', error);
+                document.querySelector('.loading').innerHTML = '<p style="color: #d93025;">Failed to load clusters</p>';
+            }
+        }
+        
+        async function openCluster(clusterId, species) {
+            try {
+                // Build query string, only include species if it's valid
+                let queryParams = `cluster_id=${clusterId}`;
+                if (species && species !== 'null') {
+                    queryParams += `&species=${species}`;
+                }
+                
+                const response = await fetch(`${API_BASE}/pets/by-label?${queryParams}`);
+                const data = await response.json();
+                
+                document.getElementById('clustersView').style.display = 'none';
+                document.getElementById('petView').style.display = 'block';
+                document.getElementById('petNameInput').value = `${species} ${clusterId}`;
+                document.getElementById('petCoverImg').src = `${API_BASE}/pets/${clusterId}/cover-image`;
+                
+                const container = document.getElementById('petPhotosContainer');
+                container.innerHTML = `
+                    <div class="date-group">
+                        <div class="date-header">${data.pets.length} photos</div>
+                        <div class="photos-grid">
+                            ${data.pets.map(pet => {
+                                const thumbUrl = `${API_BASE}/pets/pet/${pet.id}/thumbnail`;
+                                const fullUrl = pet.media ? `${API_BASE}/pets/media/${pet.media.id}/image` : thumbUrl;
+                                return `
+                                    <div class="photo-card" onclick="openLightbox('${fullUrl}', event)">
+                                        <img loading="lazy" src="${thumbUrl}" alt="${species}">
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Error loading cluster photos:', error);
+            }
+        }
+        
+        function closePetView() {
+            document.getElementById('petView').style.display = 'none';
+            document.getElementById('clustersView').style.display = 'block';
+        }
+        
+        function openLightbox(imageSrc, event) {
+            if (event) event.stopPropagation();
+            document.getElementById('lightboxImg').src = imageSrc;
+            document.getElementById('lightbox').style.display = 'flex';
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (document.getElementById('lightbox').style.display === 'flex') {
+                    closeLightbox();
+                } else if (document.getElementById('petView').style.display === 'block') {
+                    closePetView();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

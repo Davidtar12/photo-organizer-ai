@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pet Search</title>
+    <style>
+        :root { color-scheme: light; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color: #202124; background: #f8f9fa; }
+
+        .header { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 16px; padding: 16px; border-bottom: 1px solid #dadce0; background: #fff; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
+
+        .search-container { max-width: 800px; margin: 32px auto; padding: 0 16px; }
+        
+        .search-box { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(60,64,67,.3); margin-bottom: 24px; }
+        .search-box h2 { margin: 0 0 16px; font-size: 18px; font-weight: 500; }
+        
+        .text-search { margin-bottom: 32px; }
+        .text-search input { width: 100%; padding: 12px 16px; border: 1px solid #dadce0; border-radius: 24px; font-size: 16px; outline: none; }
+        .text-search input:focus { border-color: #1a73e8; box-shadow: 0 1px 6px rgba(32,33,36,.28); }
+        
+        .image-search { }
+        .upload-area { border: 2px dashed #dadce0; border-radius: 8px; padding: 32px; text-align: center; cursor: pointer; transition: all .2s; }
+        .upload-area:hover { border-color: #1a73e8; background: #f8f9fa; }
+        .upload-area.dragging { border-color: #1a73e8; background: #e8f0fe; }
+        .upload-preview { margin-top: 16px; display: none; }
+        .upload-preview img { max-width: 200px; max-height: 200px; border-radius: 8px; }
+        
+        .search-btn { background: #1a73e8; color: #fff; border: none; padding: 10px 24px; border-radius: 20px; font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 16px; }
+        .search-btn:hover { background: #1557b0; }
+        .search-btn:disabled { background: #dadce0; cursor: not-allowed; }
+        
+        .results { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+        .results-header { margin-bottom: 16px; font-size: 14px; color: #5f6368; display: flex; align-items: center; justify-content: space-between; }
+        .results-actions { display: flex; gap: 8px; }
+        .create-gallery-btn { background: #34a853; color: #fff; border: none; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500; cursor: pointer; }
+        .create-gallery-btn:hover { background: #2d8e47; }
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+        
+        .result-card { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(60,64,67,.3); cursor: pointer; transition: transform .2s; }
+        .result-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(60,64,67,.3); }
+        .result-image { width: 100%; aspect-ratio: 1; object-fit: cover; background: #f1f3f4; }
+        .result-info { padding: 12px; }
+        .result-species { font-size: 12px; color: #5f6368; text-transform: capitalize; }
+        .result-score { font-size: 14px; font-weight: 500; color: #1a73e8; margin-top: 4px; }
+        
+        .loading { text-align: center; padding: 48px; color: #5f6368; }
+        .error { background: #fce8e6; color: #d93025; padding: 16px; border-radius: 8px; margin: 16px 0; }
+
+        .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.95); z-index: 300; align-items: center; justify-content: center; }
+        .lightbox img { max-width: 90%; max-height: 90%; object-fit: contain; }
+        .lightbox .close-btn { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,.1); color: #fff; border: none; width: 44px; height: 44px; border-radius: 50%; font-size: 24px; cursor: pointer; }
+        .lightbox .close-btn:hover { background: rgba(255,255,255,.2); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 Pet Search (CLIP)</h1>
+    </div>
+    
+    <div class="search-container">
+        <div class="search-box">
+            <div class="text-search">
+                <h2>Text Search</h2>
+                <input type="text" id="textQuery" placeholder='Try: "golden retriever sitting on couch" or "my dog Max"'>
+                <button class="search-btn" onclick="searchByText()">Search by Text</button>
+            </div>
+            
+            <div class="image-search">
+                <h2>Image Search</h2>
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                    <div>📸 Click to upload or drag & drop an image</div>
+                    <div style="font-size: 12px; color: #5f6368; margin-top: 8px;">Find all similar pets</div>
+                </div>
+                <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+                <div class="upload-preview" id="uploadPreview">
+                    <img id="previewImg" src="" alt="Preview">
+                    <button class="search-btn" onclick="searchByImage()">Search by Image</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="results" id="results" style="display: none;">
+        <div class="results-header" id="resultsHeader"></div>
+        <div class="results-grid" id="resultsGrid"></div>
+    </div>
+    
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <button class="close-btn" onclick="closeLightbox(); event.stopPropagation();">×</button>
+        <img id="lightboxImg" src="" onclick="event.stopPropagation();">
+    </div>
+    
+    <script>
+        const API_BASE = 'http://127.0.0.1:5052/api';
+        let uploadedImageData = null;
+
+        // Text search
+        document.getElementById('textQuery').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchByText();
+        });
+
+        async function searchByText() {
+            const query = document.getElementById('textQuery').value.trim();
+            if (!query) return;
+
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_BASE}/pets/search/text?q=${encodeURIComponent(query)}&k=30`);
+                const data = await response.json();
+
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+
+                displayResults(data.results, `Text search: "${query}" (${data.count} results)`);
+            } catch (error) {
+                showError('Search failed: ' + error.message);
+            }
+        }
+
+        // Image upload
+        const uploadArea = document.getElementById('uploadArea');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => uploadArea.classList.add('dragging'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => uploadArea.classList.remove('dragging'), false);
+        });
+
+        uploadArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        }
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload an image file');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                uploadedImageData = e.target.result;
+                document.getElementById('previewImg').src = uploadedImageData;
+                document.getElementById('uploadPreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function searchByImage() {
+            if (!uploadedImageData) return;
+
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_BASE}/pets/search/image`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image: uploadedImageData,
+                        k: 30
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+
+                displayResults(data.results, `Image search (${data.count} similar pets found)`);
+            } catch (error) {
+                showError('Search failed: ' + error.message);
+            }
+        }
+
+        function displayResults(results, headerText) {
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('resultsHeader').textContent = headerText;
+            
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = results.map(pet => {
+                const thumbUrl = `${API_BASE}/pets/pet/${pet.id}/thumbnail`;
+                const score = (pet.similarity_score * 100).toFixed(1);
+                
+                return `
+                    <div class="result-card" onclick="openLightbox('${thumbUrl}')">
+                        <img class="result-image" src="${thumbUrl}" loading="lazy" alt="${pet.species}">
+                        <div class="result-info">
+                            <div class="result-species">${pet.species}</div>
+                            <div class="result-score">${score}% match</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Scroll to results
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function showLoading() {
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('resultsHeader').textContent = 'Searching...';
+            document.getElementById('resultsGrid').innerHTML = '<div class="loading">Building FAISS index and searching...</div>';
+        }
+
+        function showError(message) {
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('resultsHeader').textContent = 'Error';
+            document.getElementById('resultsGrid').innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        function openLightbox(imageSrc) {
+            document.getElementById('lightboxImg').src = imageSrc;
+            document.getElementById('lightbox').style.display = 'flex';
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('lightbox').style.display === 'flex') {
+                closeLightbox();
+            }
+        });
+    </script>
+</body>
+</html>

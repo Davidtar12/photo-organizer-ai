@@ -765,4 +765,4 @@ if __name__ == "__main__":  # pragma: no cover
     indexer.run(full_scan=False)
 
     # Update test image path to user-provided folder
-    test_images = list(Path('C:/Users/david/Downloads/Max').glob('*.jpg')) if Path('C:/Users/david/Downloads/Max').exists() else []
+    test_images = list(Path('C:/Users/USERNAME/Downloads/Max').glob('*.jpg')) if Path('C:/Users/USERNAME/Downloads/Max').exists() else []

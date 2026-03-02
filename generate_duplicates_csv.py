@@ -23,8 +23,8 @@ def sha256sum(filepath):
         return None
 
 def main():
-    DUPLICATES_DIR = Path(r'C:\Users\david\OneDrive\Documents\Pictures\duplicates')
-    ORGANIZED_DIR = Path(r'C:\Users\david\OneDrive\Documents\Pictures\Organized')
+    DUPLICATES_DIR = Path(r'C:\Users\USERNAME\OneDrive\Documents\Pictures\duplicates')
+    ORGANIZED_DIR = Path(r'C:\Users\USERNAME\OneDrive\Documents\Pictures\Organized')
     OUTPUT_CSV = Path(r'C:\dscodingpython\File organizers\duplicates.csv')
     
     if not DUPLICATES_DIR.exists():

@@ -22,7 +22,7 @@ def main():
     dogs = session.query(PetEmbedding).filter(PetEmbedding.species == 'dog').all()
     
     # Find Max images (from the training folder)
-    max_folder = r'C:\Users\david\Downloads\Max'
+    max_folder = r'C:\Users\USERNAME\Downloads\Max'
     max_clusters = []
     other_clusters = []
     

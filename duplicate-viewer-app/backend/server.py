@@ -199,7 +199,7 @@ def delete_file():
             
         # Safety check - ensure file is within allowed directories
         allowed_dirs = [
-            Path(r'C:\Users\david\OneDrive\Documents\Pictures'),
+            Path(r'C:\Users\USERNAME\OneDrive\Documents\Pictures'),
             Path(r'C:\dscodingpython\File organizers')
         ]
         
@@ -231,7 +231,7 @@ def delete_both():
         
         # Safety check - ensure files are within allowed directories
         allowed_dirs = [
-            Path(r'C:\Users\david\OneDrive\Documents\Pictures'),
+            Path(r'C:\Users\USERNAME\OneDrive\Documents\Pictures'),
             Path(r'C:\dscodingpython\File organizers')
         ]
         
@@ -282,7 +282,7 @@ def bulk_delete_duplicates():
             return jsonify({'error': 'No pairs provided'}), 400
         
         allowed_dirs = [
-            Path(r'C:\Users\david\OneDrive\Documents\Pictures'),
+            Path(r'C:\Users\USERNAME\OneDrive\Documents\Pictures'),
             Path(r'C:\dscodingpython\File organizers')
         ]
         

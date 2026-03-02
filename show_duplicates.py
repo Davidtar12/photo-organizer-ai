@@ -5,7 +5,7 @@ from pathlib import Path
 import os
 
 # Load duplicates
-csv_path = r"C:\Users\david\OneDrive\Documents\Pictures\photo_reports\duplicates.csv"
+csv_path = r"C:\Users\USERNAME\OneDrive\Documents\Pictures\photo_reports\duplicates.csv"
 df = pd.read_csv(csv_path)
 
 print(f"\n{'='*80}")

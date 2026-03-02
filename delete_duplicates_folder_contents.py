@@ -9,7 +9,7 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
-DUPLICATES_DIR = Path(r'C:\Users\david\OneDrive\Documents\Pictures\duplicates')
+DUPLICATES_DIR = Path(r'C:\Users\USERNAME\OneDrive\Documents\Pictures\duplicates')
 
 def main():
     if not DUPLICATES_DIR.exists():

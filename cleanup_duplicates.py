@@ -79,7 +79,7 @@ def find_all_files(root_dir, exclude_dirs=None):
 
 def main():
     # Root directory - scan all Pictures folders
-    ROOT = Path(r'C:\Users\david\OneDrive\Documents\Pictures')
+    ROOT = Path(r'C:\Users\USERNAME\OneDrive\Documents\Pictures')
     ORGANIZED_DIR = ROOT / 'Fotos' / 'Organized'
     
     if not ORGANIZED_DIR.exists():

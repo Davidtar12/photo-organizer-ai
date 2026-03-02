@@ -36,7 +36,7 @@ IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.heic', '.heif', '.raw', '.cr2', '
 # SAFETY: Move duplicates to global duplicates folder instead of deleting
 # Set to False to permanently delete duplicates
 MOVE_DUPLICATES_TO_FOLDER = True
-DUPLICATES_DIR = Path(r'C:\Users\david\OneDrive\Documents\Pictures\duplicates')
+DUPLICATES_DIR = Path(r'C:\Users\USERNAME\OneDrive\Documents\Pictures\duplicates')
 
 def get_file_quality_score(filepath):
     """Calculate quality score (resolution * 1000 + file_size)"""

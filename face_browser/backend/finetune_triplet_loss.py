@@ -20,7 +20,7 @@ from models import PetEmbedding
 from config import Config
 
 # Configuration
-MAX_DOG_FOLDER = Path(r"C:\Users\david\Downloads\Max")
+MAX_DOG_FOLDER = Path(r"C:\Users\USERNAME\Downloads\Max")
 DATABASE_URL = f'sqlite:///{Config.DB_PATH}'
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 BATCH_SIZE = 8

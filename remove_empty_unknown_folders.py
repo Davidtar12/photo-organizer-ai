@@ -9,7 +9,7 @@ import shutil
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
 
-ORGANIZED_DIR = Path(r'C:\Users\david\OneDrive\Documents\Pictures\Organized')
+ORGANIZED_DIR = Path(r'C:\Users\USERNAME\OneDrive\Documents\Pictures\Organized')
 
 def main():
     unknown_folders = [p for p in ORGANIZED_DIR.rglob('Unknown') if p.is_dir()]

@@ -20,7 +20,7 @@ import random
 from tqdm import tqdm
 
 # Configuration
-MAX_FOLDER = r"C:\Users\david\Downloads\Max"
+MAX_FOLDER = r"C:\Users\USERNAME\Downloads\Max"
 BATCH_SIZE = 32
 EMBEDDING_DIM = 512
 MARGIN = 0.5

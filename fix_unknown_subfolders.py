@@ -37,8 +37,8 @@ logger = logging.getLogger(__name__)
 
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.heic', '.heif', '.raw', '.cr2', '.nef', '.tiff', '.tif', '.bmp', '.gif', '.webp', '.jfif'}
 
-ORGANIZED_DIR = Path(r'C:\Users\david\OneDrive\Documents\Pictures\Organized')
-DUPLICATES_DIR = Path(r'C:\Users\david\OneDrive\Documents\Pictures\duplicates')
+ORGANIZED_DIR = Path(r'C:\Users\USERNAME\OneDrive\Documents\Pictures\Organized')
+DUPLICATES_DIR = Path(r'C:\Users\USERNAME\OneDrive\Documents\Pictures\duplicates')
 
 @dataclass
 class PlanItem:

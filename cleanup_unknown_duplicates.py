@@ -58,7 +58,7 @@ def find_unknown_folders(root_dir):
     return unknown_folders
 
 def main():
-    ROOT = Path(r'C:\Users\david\OneDrive\Documents\Pictures')
+    ROOT = Path(r'C:\Users\USERNAME\OneDrive\Documents\Pictures')
     
     logger.info("=" * 70)
     logger.info("UNKNOWN FOLDERS DEDUPLICATION")
